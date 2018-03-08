@@ -18,7 +18,6 @@ import com.ray3k.skincomposer.DesktopWorker;
 import com.ray3k.skincomposer.FilesDroppedListener;
 import com.ray3k.skincomposer.TextFileApplicationLogger;
 import com.ray3k.skincomposer.utils.Utils;
-import java.awt.SplashScreen;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -300,9 +299,6 @@ public class DesktopLauncher implements DesktopWorker, Lwjgl3WindowListener {
 
     @Override
     public void closeSplashScreen() {
-        SplashScreen splash = SplashScreen.getSplashScreen();
-        if (splash != null) {
-            splash.close();
-        }
+        
     }
 }
