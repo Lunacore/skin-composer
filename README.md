@@ -5,14 +5,18 @@ This project is programmed in Java and depends on LibGDX and the LWJGL3 backend.
 ### Skin Composer ###
 
 * Use Skin Composer to create skins for scene2d.ui
-* Version 16
+* Version 17
 
 ### Changes ###
 
-* Added Ctrl+E shortcut for export.
-* Added F5 shortcut for refreshing the texture atlas.
-* Moved refresh texture atlas option to project menu.
-* Added TiledDrawable functionality. See Project >> Drawables.
+* Added a hexadecimal field to the color picker.
+* Added custom drawable button to drawables dialog. Use this to refer to your classes that inherit from Drawable specified in the new custom class dialog.
+* Fixed alpha slider being initialized with the incorrect color in color picker.
+* Fixed keyboard shortcuts being incorrectly configured on alternative keyboard layouts.
+* Fixed crash bug on Mac.
+* Fixed spinner not accepting numbers starting with a decimal point.
+* Fixed removing a custom property does not remove it from new custom styles.
+* Reordered JSON export so that custom classes can be implemented by styles.
 
 ### Contact ###
 
@@ -22,7 +26,7 @@ This project is programmed in Java and depends on LibGDX and the LWJGL3 backend.
 
 ### Notes ###
 
-To run Skin Composer on OSX, download the .jar version of the app and run it via terminal with the following command: **java -jar -XstartOnFirstThread skin_composer.jar**
+To run Skin Composer on OSX, download the skin_composer_mac.jar version of the app and run it via terminal with the following command: **java -jar -XstartOnFirstThread skin_composer_mac.jar**
 
 Contributer RaimundWege has shared the following information for anyone who is working from source in Android Studio on Mac.
 

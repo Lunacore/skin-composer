@@ -901,6 +901,7 @@ public class RootTable extends Table {
                         value = (Double) styleProperty.getValue();
                     }
                     Spinner spinner = new Spinner(value, 1.0, false, Spinner.Orientation.HORIZONTAL, getSkin());
+                    spinner.setRound(false);
                     spinner.getTextField().addListener(main.getIbeamListener());
                     spinner.getButtonMinus().addListener(main.getHandListener());
                     spinner.getButtonPlus().addListener(main.getHandListener());
@@ -2527,16 +2528,19 @@ public class RootTable extends Table {
             atlas = main.getProjectData().getAtlasData().getAtlas();
 
             for (DrawableData data : main.getProjectData().getAtlasData().getDrawables()) {
-                String name = data.file.name();
-                name = DrawableData.proper(name);
-                
                 Drawable drawable;
-                if (data.tiled) {
+                if (data.customized) {
+                    drawable = getSkin().getDrawable("custom-drawable-skincomposer-image");
+                } else if (data.tiled) {
+                    String name = data.file.name();
+                    name = DrawableData.proper(name);
                     drawable = new TiledDrawable(atlas.findRegion(name));
                     drawable.setMinWidth(data.minWidth);
                     drawable.setMinHeight(data.minHeight);
                     ((TiledDrawable) drawable).getColor().set(main.getJsonData().getColorByName(data.tintName).color);
                 } else if (data.file.name().matches(".*\\.9\\.[a-zA-Z0-9]*$")) {
+                    String name = data.file.name();
+                    name = DrawableData.proper(name);
                     drawable = new NinePatchDrawable(atlas.createPatch(name));
                     if (data.tint != null) {
                         drawable = ((NinePatchDrawable) drawable).tint(data.tint);
@@ -2544,6 +2548,8 @@ public class RootTable extends Table {
                         drawable = ((NinePatchDrawable) drawable).tint(main.getProjectData().getJsonData().getColorByName(data.tintName).color);
                     }
                 } else {
+                    String name = data.file.name();
+                    name = DrawableData.proper(name);
                     drawable = new SpriteDrawable(atlas.createSprite(name));
                     if (data.tint != null) {
                         drawable = ((SpriteDrawable) drawable).tint(data.tint);
@@ -2847,27 +2853,28 @@ public class RootTable extends Table {
             //trigger shortcuts only if no dialogs are open.
             if (listenForShortcuts) {
                 if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) {
-                    switch (keycode) {
-                        case Input.Keys.Z:
+                    char character = rootTable.main.getDesktopWorker().getKeyName(keycode);
+                    switch (character) {
+                        case 'z':
                             rootTable.fire(new RootTable.RootTableEvent(RootTable.RootTableEnum.UNDO));
                             break;
-                        case Input.Keys.Y:
+                        case 'y':
                             rootTable.fire(new RootTable.RootTableEvent(RootTable.RootTableEnum.REDO));
                             break;
-                        case Input.Keys.N:
+                        case 'n':
                             rootTable.fire(new RootTable.RootTableEvent(RootTable.RootTableEnum.NEW));
                             break;
-                        case Input.Keys.O:
+                        case 'o':
                             rootTable.fire(new RootTable.RootTableEvent(RootTable.RootTableEnum.OPEN));
                             break;
-                        case Input.Keys.S:
+                        case 's':
                             if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT)) {
                                 rootTable.fire(new RootTable.RootTableEvent(RootTable.RootTableEnum.SAVE_AS));
                             } else {
                                 rootTable.fire(new RootTable.RootTableEvent(RootTable.RootTableEnum.SAVE));
                             }
                             break;
-                        case Input.Keys.E:
+                        case 'e':
                             rootTable.fire(new RootTable.RootTableEvent(RootTableEnum.EXPORT));
                             break;
                         default:
