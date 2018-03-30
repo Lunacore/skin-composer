@@ -54,6 +54,7 @@ import com.ray3k.skincomposer.data.CustomProperty;
 import com.ray3k.skincomposer.UndoableManager.NewCustomClassUndoable;
 import com.ray3k.skincomposer.data.CustomProperty.PropertyType;
 import com.ray3k.skincomposer.data.DrawableData;
+import com.ray3k.skincomposer.data.FreeTypeFontData;
 import com.ray3k.skincomposer.dialog.DialogCustomClass.CustomClassListener;
 import com.ray3k.skincomposer.dialog.DialogCustomStyle;
 import com.ray3k.skincomposer.dialog.DialogWelcome.WelcomeListener;
@@ -125,7 +126,7 @@ public class MainListener extends RootTableListener {
                 dialogFactory.showSettings();
                 break;
             case COLORS:
-                dialogFactory.showColors();
+                dialogFactory.showDialogColors();
                 break;
             case FONTS:
                 dialogFactory.showFonts();
@@ -143,9 +144,9 @@ public class MainListener extends RootTableListener {
                 dialogFactory.showNewClassDialog(new DialogCustomClass.CustomClassListener() {
                     @Override
                     public void newClassEntered(String fullyQualifiedName,
-                            String displayName) {
+                            String displayName, boolean declareAfterUIclasses) {
                         main.getUndoableManager().addUndoable(
-                                new NewCustomClassUndoable(fullyQualifiedName,displayName, main), true);
+                                new NewCustomClassUndoable(fullyQualifiedName, displayName, declareAfterUIclasses, main), true);
                     }
 
                     @Override
@@ -158,8 +159,8 @@ public class MainListener extends RootTableListener {
                 dialogFactory.showDuplicateClassDialog(new CustomClassListener() {
                     @Override
                     public void newClassEntered(String fullyQualifiedName,
-                            String displayName) {
-                        main.getUndoableManager().addUndoable(new DuplicateCustomClassUndoable(main, displayName, fullyQualifiedName), true);
+                            String displayName, boolean declareAfterUIclasses) {
+                        main.getUndoableManager().addUndoable(new DuplicateCustomClassUndoable(main, displayName, fullyQualifiedName, declareAfterUIclasses), true);
                     }
 
                     @Override
@@ -175,8 +176,8 @@ public class MainListener extends RootTableListener {
                 dialogFactory.showRenameClassDialog(new DialogCustomClass.CustomClassListener() {
                     @Override
                     public void newClassEntered(String fullyQualifiedName,
-                            String displayName) {
-                        main.getUndoableManager().addUndoable(new UndoableManager.RenameCustomClassUndoable(main, displayName, fullyQualifiedName), true);
+                            String displayName, boolean declareAfterUIclasses) {
+                        main.getUndoableManager().addUndoable(new UndoableManager.RenameCustomClassUndoable(main, displayName, fullyQualifiedName, declareAfterUIclasses), true);
                     }
 
                     @Override
@@ -452,6 +453,12 @@ public class MainListener extends RootTableListener {
                 
                 for (FontData font : main.getProjectData().getJsonData().getFonts()) {
                     if (!font.file.parent().equals(fileHandle.parent())) {
+                        font.file.copyTo(fileHandle.parent());
+                    }
+                }
+                
+                for (FreeTypeFontData font : main.getProjectData().getJsonData().getFreeTypeFonts()) {
+                    if (font.useCustomSerializer && !font.file.parent().equals(fileHandle.parent())) {
                         font.file.copyTo(fileHandle.parent());
                     }
                 }

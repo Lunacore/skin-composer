@@ -27,6 +27,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
@@ -56,6 +57,7 @@ import java.io.StringWriter;
 public class JsonData implements Json.Serializable {
     private Array<ColorData> colors;
     private Array<FontData> fonts;
+    private Array<FreeTypeFontData> freeTypeFonts;
     private OrderedMap<Class, Array<StyleData>> classStyleMap;
     private Array<CustomClass> customClasses;
     private Main main;
@@ -63,6 +65,7 @@ public class JsonData implements Json.Serializable {
     public JsonData() {
         colors = new Array<>();
         fonts = new Array<>();
+        freeTypeFonts = new Array<>();
 
         initializeClassStyleMap();
         customClasses = new Array<>();
@@ -75,6 +78,10 @@ public class JsonData implements Json.Serializable {
     public void clear() {
         colors.clear();
         fonts.clear();
+        for (FreeTypeFontData font : freeTypeFonts) {
+            font.bitmapFont.dispose();
+        }
+        freeTypeFonts.clear();
         initializeClassStyleMap();
         customClasses.clear();
     }
@@ -136,6 +143,67 @@ public class JsonData implements Json.Serializable {
                         for (String path : bitmapFontData.imagePaths) {
                             FileHandle file = new FileHandle(path);
                             main.getProjectData().getAtlasData().getDrawable(file.nameWithoutExtension()).visible = false;
+                        }
+                    }
+                }
+            } //FreeType fonts
+            else if (child.name().equals(FreeTypeFontGenerator.class.getName())) {
+                for (JsonValue font : child.iterator()) {
+                    if (font.get("font") != null) {
+                        FreeTypeFontData data = new FreeTypeFontData();
+                        data.name = font.name;
+                        data.previewTTF = font.getString("previewTTF", null);
+                        data.useCustomSerializer= font.getBoolean("useCustomSerializer", false);
+                        data.size = font.getInt("size", 16);
+                        data.mono = font.getBoolean("mono", false);
+                        data.hinting = font.getString("hinting", "AutoMedium");
+                        data.color = font.getString("color", null);
+                        data.gamma = font.getFloat("gamma", 1.8f);
+                        data.renderCount = font.getInt("renderCount", 2);
+                        data.borderWidth = font.getFloat("borderWidth", 0);
+                        data.borderColor = font.getString("borderColor", null);
+                        data.borderStraight = font.getBoolean("borderStraight", false);
+                        data.borderGamma = font.getFloat("borderGamma", 1.8f);
+                        data.shadowOffsetX = font.getInt("shadowOffsetX", 0);
+                        data.shadowOffsetY = font.getInt("shadowOffsetY", 0);
+                        data.shadowColor = font.getString("shadowColor", null);
+                        data.spaceX = font.getInt("spaceX", 0);
+                        data.spaceY = font.getInt("spaceY", 0);
+                        data.characters = font.getString("characters", "");
+                        data.kerning = font.getBoolean("kerning", true);
+                        data.flip = font.getBoolean("flip", false);
+                        data.genMipMaps = font.getBoolean("genMipMaps", false);
+                        data.minFilter = font.getString("minFilter", "Nearest");
+                        data.magFilter = font.getString("magFilter", "Nearest");
+                        data.incremental = font.getBoolean("bitmapFont", false);
+
+                        FileHandle fontFile = fileHandle.sibling(font.getString("font"));
+                        if (!fontFile.exists()) {
+                            warnings.add("[RED]ERROR:[] Font file [BLACK]" + fontFile.name() + "[] does not exist.");
+                            return warnings;
+                        }
+                        FileHandle fontCopy = targetDirectory.child(font.getString("font"));
+                        if (!fontCopy.parent().equals(fontFile.parent())) {
+                            fontFile.copyTo(fontCopy);
+                        }
+                        data.file = fontCopy;
+                        data.createBitmapFont(main);
+
+                        if (data.bitmapFont != null) {
+                            //delete fonts with the same name
+                            for (FontData duplicate : new Array<>(fonts)) {
+                                if (duplicate.getName().equals(data.name)) {
+                                    fonts.removeValue(duplicate, false);
+                                }
+                            }
+
+                            for (FreeTypeFontData duplicate : new Array<>(freeTypeFonts)) {
+                                if (duplicate.name.equals(data.name)) {
+                                    freeTypeFonts.removeValue(duplicate, false);
+                                }
+                            }
+
+                            freeTypeFonts.add(data);
                         }
                     }
                 }
@@ -478,6 +546,49 @@ public class JsonData implements Json.Serializable {
             json.writeObjectEnd();
         }
         
+        //FreeType fonts
+        boolean exportFreeType = false;
+        for (FreeTypeFontData font : freeTypeFonts) {
+            if (font.useCustomSerializer) {
+                exportFreeType = true;
+                break;
+            }
+        }
+
+        if (exportFreeType) {
+            json.writeObjectStart(FreeTypeFontGenerator.class.getName());
+            for (FreeTypeFontData font : freeTypeFonts) {
+                if (font.useCustomSerializer) {
+                    json.writeObjectStart(font.name);
+                    json.writeValue("font", font.file.name());
+                    json.writeValue("size", font.size);
+                    json.writeValue("mono", font.mono);
+                    if (font.color != null) json.writeValue("color", font.color);
+                    json.writeValue("gamma", font.gamma);
+                    json.writeValue("renderCount", font.renderCount);
+                    json.writeValue("borderWidth", font.borderWidth);
+                    if (font.borderColor != null) json.writeValue("borderColor", font.borderColor);
+                    json.writeValue("borderStraight", font.borderStraight);
+                    json.writeValue("borderGamma", font.borderGamma);
+                    json.writeValue("shadowOffsetX", font.shadowOffsetX);
+                    json.writeValue("shadowOffsetY", font.shadowOffsetY);
+                    if (font.shadowColor != null) json.writeValue("shadowColor", font.shadowColor);
+                    json.writeValue("spaceX", font.spaceX);
+                    json.writeValue("spaceY", font.spaceY);
+                    json.writeValue("kerning", font.kerning);
+                    json.writeValue("flip", font.flip);
+                    json.writeValue("genMipMaps", font.genMipMaps);
+                    json.writeValue("incremental", font.incremental);
+                    json.writeValue("hinting", font.hinting);
+                    json.writeValue("minFilter", font.minFilter);
+                    json.writeValue("magFilter", font.magFilter);
+                    json.writeValue("characters", font.characters.equals("") ? FreeTypeFontGenerator.DEFAULT_CHARS : font.characters);
+                    json.writeObjectEnd();
+                }
+            }
+            json.writeObjectEnd();
+        }
+        
         Array<DrawableData> tintedDrawables = new Array<>();
         Array<DrawableData> tiledDrawables = new Array<>();
         for (DrawableData drawable : main.getProjectData().getAtlasData().getDrawables()) {
@@ -523,36 +634,38 @@ public class JsonData implements Json.Serializable {
             json.writeObjectEnd();
         }
         
-        //custom classes
+        //custom classes declared before UI classes
         for (CustomClass customClass : customClasses) {
-            if (customClassHasFields(customClass)) {
-                json.writeObjectStart(customClass.getFullyQualifiedName());
-                for (CustomStyle customStyle : customClass.getStyles()) {
-                    if (customStyleHasFields(customStyle)) {
-                        json.writeObjectStart(customStyle.getName());
+            if (!customClass.isDeclareAfterUIclasses()) {
+                if (customClassHasFields(customClass)) {
+                    json.writeObjectStart(customClass.getFullyQualifiedName());
+                    for (CustomStyle customStyle : customClass.getStyles()) {
+                        if (customStyleHasFields(customStyle)) {
+                            json.writeObjectStart(customStyle.getName());
 
-                        for (CustomProperty customProperty : customStyle.getProperties()) {
-                            //only write value if it is valid
-                            if (customPropertyIsNotNull(customProperty)) {
-                                if (customProperty.getType().equals(CustomProperty.PropertyType.RAW_TEXT)) {
-                                    try {
-                                        json.getWriter().json(customProperty.getName(), (String)customProperty.getValue());
-                                    } catch (Exception e) {
-                                        DialogFactory.showDialogErrorStatic("Error writing custom property.", "Error writing custom property " + customProperty.getName() + " for custom class " + customClass.getDisplayName() + ".");
+                            for (CustomProperty customProperty : customStyle.getProperties()) {
+                                //only write value if it is valid
+                                if (customPropertyIsNotNull(customProperty)) {
+                                    if (customProperty.getType().equals(CustomProperty.PropertyType.RAW_TEXT)) {
+                                        try {
+                                            json.getWriter().json(customProperty.getName(), (String)customProperty.getValue());
+                                        } catch (Exception e) {
+                                            DialogFactory.showDialogErrorStatic("Error writing custom property.", "Error writing custom property " + customProperty.getName() + " for custom class " + customClass.getDisplayName() + ".");
+                                        }
+                                    } else {
+                                        json.writeValue(customProperty.getName(), customProperty.getValue());
                                     }
-                                } else {
-                                    json.writeValue(customProperty.getName(), customProperty.getValue());
                                 }
                             }
+                            json.writeObjectEnd();
+                        } else {
+                            warnings.add("Did not export custom style [BLACK]" + customStyle.getName() + "[] for class [BLACK]" + customClass.getDisplayName() + "[] (All fields null)");
                         }
-                        json.writeObjectEnd();
-                    } else {
-                        warnings.add("Did not export custom style [BLACK]" + customStyle.getName() + "[] for class [BLACK]" + customClass.getDisplayName() + "[] (All fields null)");
                     }
+                    json.writeObjectEnd();
+                } else {
+                    warnings.add("Did not export custom class [BLACK]" + customClass.getDisplayName() + "[] (No valid styles)");
                 }
-                json.writeObjectEnd();
-            } else {
-                warnings.add("Did not export custom class [BLACK]" + customClass.getDisplayName() + "[] (No valid styles)");
             }
         }
 
@@ -597,6 +710,41 @@ public class JsonData implements Json.Serializable {
                 json.writeObjectEnd();
             } else {
                 warnings.add("Did not export class [BLACK]" + clazz.getSimpleName() + "[] (No valid styles)");
+            }
+        }
+        
+        //custom classes declared after UI classes
+        for (CustomClass customClass : customClasses) {
+            if (customClass.isDeclareAfterUIclasses()) {
+                if (customClassHasFields(customClass)) {
+                    json.writeObjectStart(customClass.getFullyQualifiedName());
+                    for (CustomStyle customStyle : customClass.getStyles()) {
+                        if (customStyleHasFields(customStyle)) {
+                            json.writeObjectStart(customStyle.getName());
+
+                            for (CustomProperty customProperty : customStyle.getProperties()) {
+                                //only write value if it is valid
+                                if (customPropertyIsNotNull(customProperty)) {
+                                    if (customProperty.getType().equals(CustomProperty.PropertyType.RAW_TEXT)) {
+                                        try {
+                                            json.getWriter().json(customProperty.getName(), (String)customProperty.getValue());
+                                        } catch (Exception e) {
+                                            DialogFactory.showDialogErrorStatic("Error writing custom property.", "Error writing custom property " + customProperty.getName() + " for custom class " + customClass.getDisplayName() + ".");
+                                        }
+                                    } else {
+                                        json.writeValue(customProperty.getName(), customProperty.getValue());
+                                    }
+                                }
+                            }
+                            json.writeObjectEnd();
+                        } else {
+                            warnings.add("Did not export custom style [BLACK]" + customStyle.getName() + "[] for class [BLACK]" + customClass.getDisplayName() + "[] (All fields null)");
+                        }
+                    }
+                    json.writeObjectEnd();
+                } else {
+                    warnings.add("Did not export custom class [BLACK]" + customClass.getDisplayName() + "[] (No valid styles)");
+                }
             }
         }
 
@@ -689,6 +837,10 @@ public class JsonData implements Json.Serializable {
         return fonts;
     }
 
+    public Array<FreeTypeFontData> getFreeTypeFonts() {
+        return freeTypeFonts;
+    }
+
     public OrderedMap<Class, Array<StyleData>> getClassStyleMap() {
         return classStyleMap;
     }
@@ -720,6 +872,7 @@ public class JsonData implements Json.Serializable {
     public void write(Json json) {
         json.writeValue("colors", colors);
         json.writeValue("fonts", fonts);
+        json.writeValue("freeTypeFonts", freeTypeFonts);
         json.writeValue("classStyleMap", classStyleMap);
         json.writeValue("customClasses", customClasses, Array.class, CustomClass.class);
     }
@@ -729,15 +882,20 @@ public class JsonData implements Json.Serializable {
         try {
             colors = json.readValue("colors", Array.class, jsonData);
             fonts = json.readValue("fonts", Array.class, jsonData);
+            
+            freeTypeFonts = json.readValue("freeTypeFonts", Array.class, new Array<FreeTypeFontData>(),jsonData);
+            
             classStyleMap = new OrderedMap<>();
             for (JsonValue data : jsonData.get("classStyleMap").iterator()) {
                 classStyleMap.put(ClassReflection.forName(data.name), json.readValue(Array.class, data));
             }
+            
             for (Array<StyleData> styleDatas : classStyleMap.values()) {
                 for (StyleData styleData : styleDatas) {
                     styleData.jsonData = this;
                 }
             }
+            
             customClasses = json.readValue("customClasses", Array.class, CustomClass.class, new Array<>(), jsonData);
             for (CustomClass customClass : customClasses) {
                 customClass.setMain(main);
@@ -826,6 +984,12 @@ public class JsonData implements Json.Serializable {
         
         customClasses.clear();
         customClasses.addAll(jsonData.customClasses);
+        
+        for (FreeTypeFontData font : freeTypeFonts) {
+            font.bitmapFont.dispose();
+        }
+        freeTypeFonts.clear();
+        freeTypeFonts.addAll(jsonData.freeTypeFonts);
     }
 
     public Array<CustomClass> getCustomClasses() {

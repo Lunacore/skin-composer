@@ -91,6 +91,7 @@ import com.ray3k.skincomposer.data.CustomProperty.PropertyType;
 import com.ray3k.skincomposer.data.CustomStyle;
 import com.ray3k.skincomposer.data.DrawableData;
 import com.ray3k.skincomposer.data.FontData;
+import com.ray3k.skincomposer.data.FreeTypeFontData;
 import com.ray3k.skincomposer.data.StyleData;
 import com.ray3k.skincomposer.data.StyleProperty;
 import com.ray3k.skincomposer.dialog.DialogColorPicker;
@@ -865,6 +866,13 @@ public class RootTable extends Table {
                             if (font.getName().equals(styleProperty.getValue())) {
                                 value = (String) styleProperty.getValue();
                                 break;
+                            }
+                        }
+                        
+                        for (FreeTypeFontData font : main.getJsonData().getFreeTypeFonts()) {
+                            System.out.println("hit");
+                            if (font.name.equals(styleProperty.getValue())) {
+                                value = (String) styleProperty.getValue();
                             }
                         }
                     }
@@ -2414,11 +2422,25 @@ public class RootTable extends Table {
                                             break;
                                         }
                                     }
-
+                                    
                                     if (font != null) {
                                         Label labelFont = new Label(fontData.getName(), new LabelStyle(font, Color.WHITE));
                                         container.setActor(labelFont);
                                     }
+                                    
+                                    FreeTypeFontData freeTypeFontData = null;
+                                    for (FreeTypeFontData fd : main.getJsonData().getFreeTypeFonts()) {
+                                        if (fd.name.equals(fontName)) {
+                                            freeTypeFontData = fd;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (freeTypeFontData.bitmapFont != null) {
+                                        Label labelFont = new Label(freeTypeFontData.name, new LabelStyle(freeTypeFontData.bitmapFont, Color.WHITE));
+                                        container.setActor(labelFont);
+                                    }
+                                    
                                     break;
                                 case DRAWABLE:
                                     DrawableData drawable = null;
@@ -2467,6 +2489,12 @@ public class RootTable extends Table {
                                 BitmapFont font = new BitmapFont(data.file);
                                 previewFonts.add(font);
                                 field.set(returnValue, font);
+                            }
+                        }
+                        
+                        for (FreeTypeFontData data : main.getJsonData().getFreeTypeFonts()) {
+                            if (value.equals(data.name)) {
+                                field.set(returnValue, data.bitmapFont);
                             }
                         }
                     } else if (field.getType().equals(Float.TYPE)) {

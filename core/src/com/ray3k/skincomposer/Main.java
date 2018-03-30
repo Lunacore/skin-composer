@@ -72,7 +72,7 @@ import com.ray3k.skincomposer.data.ProjectData;
 import com.ray3k.skincomposer.utils.Utils;
 
 public class Main extends ApplicationAdapter {
-    public final static String VERSION = "17";
+    public final static String VERSION = "18";
     public static final Class[] BASIC_CLASSES = {Button.class, CheckBox.class,
         ImageButton.class, ImageTextButton.class, Label.class, List.class,
         ProgressBar.class, ScrollPane.class, SelectBox.class, Slider.class,
@@ -122,6 +122,27 @@ public class Main extends ApplicationAdapter {
         FileHandle fileHandle = Gdx.files.local("texturepacker/defaults.json");
         if (!fileHandle.exists()) {
             Gdx.files.internal("defaults.json").copyTo(fileHandle);
+        }
+        
+        //copy preview fonts to preview fonts folder if they do not exist
+        fileHandle = Gdx.files.local("preview fonts/IBMPlexSerif-Medium.ttf");
+        if (!fileHandle.exists()) {
+            Gdx.files.internal("preview fonts/IBMPlexSerif-Medium.ttf").copyTo(fileHandle);
+        }
+        
+        fileHandle = Gdx.files.local("preview fonts/Pacifico-Regular.ttf");
+        if (!fileHandle.exists()) {
+            Gdx.files.internal("preview fonts/Pacifico-Regular.ttf").copyTo(fileHandle);
+        }
+        
+        fileHandle = Gdx.files.local("preview fonts/PressStart2P-Regular.ttf");
+        if (!fileHandle.exists()) {
+            Gdx.files.internal("preview fonts/PressStart2P-Regular.ttf").copyTo(fileHandle);
+        }
+        
+        fileHandle = Gdx.files.local("preview fonts/SourceSansPro-Regular.ttf");
+        if (!fileHandle.exists()) {
+            Gdx.files.internal("preview fonts/SourceSansPro-Regular.ttf").copyTo(fileHandle);
         }
         
         ibeamListener = new IbeamListener();
