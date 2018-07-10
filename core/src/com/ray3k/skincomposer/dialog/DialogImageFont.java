@@ -682,6 +682,12 @@ public class DialogImageFont extends Dialog {
             textField.setText(fileHandle.path());
             textField.setCursorPosition(textField.getText().length() - 1);
             
+            textField = (TextField) findActor("targetpath");
+            textField.setText(fileHandle.parent() + "/" + fileHandle.nameWithoutExtension() + " export.fnt");
+            textField.setCursorPosition(textField.getText().length() - 1);
+            
+            ((TextButton) findActor("generate")).setDisabled(false);
+            
             for (var fadable : fadables) {
                 fadable.addAction(Actions.fadeIn(1.0f, Interpolation.fade));
                 fadable.setTouchable(Touchable.enabled);
@@ -1109,6 +1115,7 @@ public class DialogImageFont extends Dialog {
         Gdx.files.local("imagefont/characters").emptyDirectory();
         for (var character : bitmapCharacters) {
             var pixmap = new Pixmap(character.width, character.cropHeight, Pixmap.Format.RGBA8888);
+            pixmap.setBlending(Pixmap.Blending.None);
             pixmap.drawPixmap(fontPixmap, 0, 0, character.x, character.cropY, character.width, character.cropHeight);
             PixmapIO.writePNG(Gdx.files.local("imagefont/characters/" + character.name + ".png"), pixmap);
             pixmap.dispose();
