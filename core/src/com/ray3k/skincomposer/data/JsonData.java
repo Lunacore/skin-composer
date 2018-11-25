@@ -61,6 +61,27 @@ public class JsonData implements Json.Serializable {
     private OrderedMap<Class, Array<StyleData>> classStyleMap;
     private Array<CustomClass> customClasses;
     private Main main;
+    
+    public static enum ExportFormat {
+        MINIMAL("Minimal", JsonWriter.OutputType.minimal), JAVASCRIPT("JavaScript", JsonWriter.OutputType.javascript), JSON("JSON", JsonWriter.OutputType.json);
+        
+        private final String name;
+        private final JsonWriter.OutputType outputType;
+        
+        ExportFormat(String name, JsonWriter.OutputType outputType) {
+            this.name = name;
+            this.outputType = outputType;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        public JsonWriter.OutputType getOutputType() {
+            return outputType;
+        }
+    }
 
     public JsonData() {
         this.main = Main.main;
@@ -790,6 +811,7 @@ public class JsonData implements Json.Serializable {
             if (null != customProperty.getType()) switch (customProperty.getType()) {
                 case TEXT:
                 case RAW_TEXT:
+                case STYLE:
                     returnValue = true;
                     break;
                 case COLOR:
